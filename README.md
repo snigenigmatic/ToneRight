@@ -75,28 +75,125 @@ Your project is deployed at:
 - **Authentication**: Supabase Auth
 - **AI**: Groq API for tone analysis
 - **Deployment**: Vercel
+- **CI/CD**: GitHub Actions
 
 ## Project Structure
 
 ```
-├── app/                  # Next.js app router pages
-├── components/           # Reusable UI components
-├── lib/                  # Utilities and configurations
+├── .github/             # GitHub Actions workflows and templates
+│   ├── workflows/       # CI/CD pipelines
+│   └── ISSUE_TEMPLATE/  # Issue templates
+├── app/                 # Next.js app router pages
+├── components/          # Reusable UI components
+├── lib/                 # Utilities and configurations
 ├── public/              # Static assets
 ├── scripts/             # Database setup scripts
 └── styles/              # Global styles
 ```
 
+## CI/CD Pipeline
+
+### GitHub Actions Workflows
+
+1. **Main CI/CD Pipeline** (`.github/workflows/ci-cd.yml`)
+   - Runs on push to `main`/`develop` and PRs to `main`
+   - Code quality checks, testing, and automated deployment
+
+2. **Code Quality** (`.github/workflows/code-quality.yml`)
+   - ESLint analysis with SARIF reporting
+   - Lighthouse performance audits
+
+3. **Security Scanning** (`.github/workflows/security.yml`)
+   - Trivy vulnerability scanning
+   - Dependency review for PRs
+
+4. **Dependency Updates** (`.github/workflows/dependency-updates.yml`)
+   - Automated weekly dependency updates
+   - Creates PRs with security fixes
+
+5. **Release Automation** (`.github/workflows/release.yml`)
+   - Triggered on version tags
+   - Automated changelog generation
+   - Production deployment
+
+### Required GitHub Secrets
+
+To enable full CI/CD functionality, add these secrets to your GitHub repository:
+
+```bash
+# Vercel Deployment
+VERCEL_TOKEN=your_vercel_token
+VERCEL_ORG_ID=your_vercel_org_id
+VERCEL_PROJECT_ID=your_vercel_project_id
+
+# Application Environment Variables
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+GROQ_API_KEY=your_groq_api_key
+```
+
+### Setting Up CI/CD
+
+1. **Fork/Clone the repository**
+2. **Add required secrets** in GitHub repository settings
+3. **Push changes** to trigger the CI/CD pipeline
+4. **Create PRs** to see preview deployments in action
+
+### Available Scripts
+
+```bash
+# Development
+pnpm dev              # Start development server
+pnpm build            # Build for production
+pnpm start            # Start production server
+
+# Code Quality
+pnpm lint             # Run ESLint
+pnpm lint:fix         # Fix ESLint issues
+pnpm type-check       # TypeScript type checking
+
+# Testing
+pnpm test             # Run tests
+pnpm test:watch       # Run tests in watch mode
+
+# Utilities
+pnpm clean            # Clean build artifacts
+pnpm analyze          # Bundle analysis
+```
+
+## Deployment
+
+### Automatic Deployment
+
+- **Production**: Deployed automatically on push to `main` branch
+- **Preview**: Deployed automatically for pull requests
+- **Release**: Triggered by creating version tags (e.g., `v1.0.0`)
+
+### Manual Deployment
+
+```bash
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy to preview
+vercel
+
+# Deploy to production
+vercel --prod
+```
+
 ## Troubleshooting
 
-### Common Issues:
+### Common Issues
 
 1. **Supabase Connection Error**: Make sure your environment variables are set correctly
 2. **Build Errors**: Ensure all dependencies are installed with `pnpm install`
 3. **TypeScript Errors**: The project uses TypeScript 5.1.0+ for Next.js 16 compatibility
+4. **CI/CD Failures**: Check GitHub Actions logs and ensure all required secrets are set
 
-### Getting Help:
+### Getting Help
 
 - Check the console for detailed error messages
+- Review GitHub Actions workflow logs
 - Ensure your Supabase project is properly configured
 - Verify your API keys are valid and have proper permissions
