@@ -64,78 +64,108 @@ export function DashboardClient() {
   }
 
   return (
-    <main className="max-w-4xl mx-auto px-6 py-8">
-      <div className="space-y-8">
-        {/* Header with Tabs */}
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold text-foreground">Email Tone Analyzer</h1>
-            <p className="text-muted-foreground">
-              Analyze your email tone across professional, casual, and empathetic perspectives
-            </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+      <main className="max-w-4xl mx-auto px-4 py-8">
+        <div className="space-y-8">
+          {/* Clean Header Section */}
+          <div className="text-center space-y-6">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-semibold text-gray-900 dark:text-gray-100">
+                Email Tone Analyzer
+              </h1>
+              <p className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto">
+                Analyze your email tone across professional, casual, and empathetic perspectives
+              </p>
+            </div>
+
+            {/* Clean Tab Navigation */}
+            <div className="flex justify-center">
+              <div className="flex bg-white dark:bg-gray-800 rounded-lg p-1 shadow-sm border border-gray-200 dark:border-gray-700">
+                <Button
+                  variant={tab === "analyzer" ? "default" : "ghost"}
+                  onClick={() => setTab("analyzer")}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                    tab === "analyzer" 
+                      ? "bg-blue-600 text-white shadow-sm" 
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  }`}
+                >
+                  Analyzer
+                </Button>
+                <Button
+                  variant={tab === "history" ? "default" : "ghost"}
+                  onClick={() => setTab("history")}
+                  className={`px-6 py-2 rounded-md text-sm font-medium transition-colors ${
+                    tab === "history" 
+                      ? "bg-blue-600 text-white shadow-sm" 
+                      : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
+                  }`}
+                >
+                  History
+                </Button>
+              </div>
+            </div>
           </div>
 
-          <div className="flex gap-2 border-b border-border">
-            <Button
-              variant={tab === "analyzer" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setTab("analyzer")}
-              className={tab === "analyzer" ? "" : "bg-transparent"}
-            >
-              Analyzer
-            </Button>
-            <Button
-              variant={tab === "history" ? "default" : "ghost"}
-              size="sm"
-              onClick={() => setTab("history")}
-              className={tab === "history" ? "" : "bg-transparent"}
-            >
-              History
-            </Button>
-          </div>
+          {/* Analyzer Tab */}
+          {tab === "analyzer" && (
+            <div className="space-y-6">
+              <EmailInputForm onSubmit={handleAnalyze} loading={loading} />
+
+              {error && (
+                <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <div className="w-5 h-5 text-red-500 mt-0.5">⚠</div>
+                    <div>
+                      <h3 className="font-medium text-red-800 dark:text-red-200 text-sm">Analysis Error</h3>
+                      <p className="text-sm text-red-600 dark:text-red-400 mt-1">{error}</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {loading && <SkeletonLoader />}
+
+              {analysis && !loading && (
+                <div className="space-y-4">
+                  <div className="flex justify-end">
+                    <ExportButton analysis={analysis} email={email} />
+                  </div>
+                  <ToneResults analysis={analysis} />
+                </div>
+              )}
+
+              {!analysis && !error && !loading && (
+                <div className="text-center py-12">
+                  <div className="space-y-3">
+                    <div className="w-16 h-16 mx-auto bg-gray-100 dark:bg-gray-800 rounded-full flex items-center justify-center">
+                      <span className="text-2xl">📧</span>
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-700 dark:text-gray-300">Ready to Analyze</h3>
+                    <p className="text-gray-500 dark:text-gray-400 text-sm max-w-sm mx-auto">
+                      Paste your email content above to get started with tone analysis
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* History Tab */}
+          {tab === "history" && (
+            <div className="space-y-4">
+              <div className="text-center">
+                <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Analysis History</h2>
+                <p className="text-gray-600 dark:text-gray-400 text-sm">Review your previous analyses</p>
+              </div>
+              <AnalysisHistory onSelect={handleSelectAnalysis} />
+            </div>
+          )}
         </div>
 
-        {/* Analyzer Tab */}
-        {tab === "analyzer" && (
-          <div className="space-y-8">
-            <EmailInputForm onSubmit={handleAnalyze} loading={loading} />
-
-            {error && (
-              <div className="p-4 bg-destructive/10 border border-destructive/20 rounded text-sm text-destructive">
-                {error}
-              </div>
-            )}
-
-            {loading && <SkeletonLoader />}
-
-            {analysis && !loading && (
-              <div className="space-y-4">
-                <div className="flex justify-end">
-                  <ExportButton analysis={analysis} email={email} />
-                </div>
-                <ToneResults analysis={analysis} />
-              </div>
-            )}
-
-            {!analysis && !error && !loading && (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Paste an email above to get started</p>
-              </div>
-            )}
-          </div>
-        )}
-
-        {/* History Tab */}
-        {tab === "history" && (
-          <div className="space-y-4">
-            <h2 className="text-lg font-medium text-foreground">Analysis History</h2>
-            <AnalysisHistory onSelect={handleSelectAnalysis} />
-          </div>
-        )}
-      </div>
-
-      {/* Keyboard Shortcuts Helper */}
-      <KeyboardShortcuts />
-    </main>
+        {/* Keyboard Shortcuts Helper */}
+        <KeyboardShortcuts />
+      </main>
+    </div>
   )
 }

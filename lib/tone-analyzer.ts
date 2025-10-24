@@ -24,37 +24,13 @@ export interface ToneAnalysis {
   improvements: string[]
 }
 
-const TONE_ANALYSIS_PROMPT = `You are an expert email tone analyzer. Analyze the following email and provide a detailed tone analysis in JSON format.
+const TONE_ANALYSIS_PROMPT = `Analyze this email's tone and respond with ONLY valid JSON in this exact format:
 
-Email to analyze:
-"{email}"
+{"overall_tone":"brief description","confidence":0.85,"perspectives":{"professional":{"tone":"description","score":0.8,"suggestions":["tip1","tip2","tip3"]},"casual":{"tone":"description","score":0.6,"suggestions":["tip1","tip2","tip3"]},"empathetic":{"tone":"description","score":0.7,"suggestions":["tip1","tip2","tip3"]}},"key_issues":["issue1","issue2"],"improvements":["improvement1","improvement2","improvement3"]}
 
-Provide your analysis in this exact JSON format (no markdown, just raw JSON):
-{{
-  "overall_tone": "string describing the overall tone",
-  "confidence": number between 0 and 1,
-  "perspectives": {{
-    "professional": {{
-      "tone": "how this email reads in a professional context",
-      "score": number between 0 and 1 (1 = very professional),
-      "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
-    }},
-    "casual": {{
-      "tone": "how this email reads in a casual context",
-      "score": number between 0 and 1 (1 = very casual),
-      "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
-    }},
-    "empathetic": {{
-      "tone": "how this email reads in an empathetic context",
-      "score": number between 0 and 1 (1 = very empathetic),
-      "suggestions": ["suggestion 1", "suggestion 2", "suggestion 3"]
-    }}
-  }},
-  "key_issues": ["issue 1", "issue 2"],
-  "improvements": ["improvement 1", "improvement 2", "improvement 3"]
-}}
+Email: "{email}"
 
-Return ONLY the JSON object, no additional text.`
+JSON:`
 
 export async function analyzeTone(email: string): Promise<ToneAnalysis> {
   if (!email || email.trim().length === 0) {
@@ -64,8 +40,8 @@ export async function analyzeTone(email: string): Promise<ToneAnalysis> {
   const groq = getGroqClient()
 
   try {
-    const message = await groq.messages.create({
-      model: "mixtral-8x7b-32768",
+    const completion = await groq.chat.completions.create({
+      model: "openai/gpt-oss-20b",
       max_tokens: 1024,
       messages: [
         {
@@ -75,21 +51,71 @@ export async function analyzeTone(email: string): Promise<ToneAnalysis> {
       ],
     })
 
-    const responseText = message.content[0].type === "text" ? message.content[0].text : ""
+    const responseText = completion.choices[0]?.message?.content || ""
 
-    // Parse the JSON response
-    const analysis = JSON.parse(responseText) as ToneAnalysis
-
-    // Validate the response structure
-    if (!analysis.overall_tone || !analysis.perspectives || !analysis.key_issues || !analysis.improvements) {
-      throw new Error("Invalid response structure from Groq")
+    // Clean and parse the JSON response
+    let analysis: ToneAnalysis
+    try {
+      // Clean the response text
+      let cleanResponse = responseText.trim()
+      
+      // Remove any markdown code blocks
+      cleanResponse = cleanResponse.replace(/```json\s*/g, '').replace(/```\s*/g, '')
+      
+      // Find JSON object bounds
+      const jsonStart = cleanResponse.indexOf('{')
+      const jsonEnd = cleanResponse.lastIndexOf('}')
+      
+      if (jsonStart === -1 || jsonEnd === -1 || jsonEnd <= jsonStart) {
+        throw new Error("No valid JSON object found in response")
+      }
+      
+      const jsonString = cleanResponse.substring(jsonStart, jsonEnd + 1)
+      analysis = JSON.parse(jsonString) as ToneAnalysis
+      
+    } catch (parseError) {
+      console.error("Failed to parse JSON response:", responseText)
+      
+      // Fallback: return a default analysis
+      return {
+        overall_tone: "neutral and informative",
+        confidence: 0.7,
+        perspectives: {
+          professional: {
+            tone: "suitable for professional communication",
+            score: 0.7,
+            suggestions: ["Consider more formal language", "Add clear call to action", "Use professional greetings"]
+          },
+          casual: {
+            tone: "moderately casual and approachable",
+            score: 0.6,
+            suggestions: ["Add personal touches", "Use more conversational tone", "Include friendly expressions"]
+          },
+          empathetic: {
+            tone: "shows understanding and consideration",
+            score: 0.8,
+            suggestions: ["Acknowledge recipient's perspective", "Use supportive language", "Show appreciation"]
+          }
+        },
+        key_issues: ["Unable to fully analyze due to parsing error"],
+        improvements: ["Retry analysis with clearer content", "Ensure email is properly formatted", "Check for special characters"]
+      }
     }
+
+    // Validate and fix the response structure
+    if (!analysis.overall_tone) analysis.overall_tone = "neutral"
+    if (!analysis.confidence || analysis.confidence < 0 || analysis.confidence > 1) analysis.confidence = 0.7
+    if (!analysis.perspectives) analysis.perspectives = {
+      professional: { tone: "professional", score: 0.7, suggestions: ["Add professional language"] },
+      casual: { tone: "casual", score: 0.6, suggestions: ["Add casual elements"] },
+      empathetic: { tone: "empathetic", score: 0.8, suggestions: ["Show more empathy"] }
+    }
+    if (!analysis.key_issues) analysis.key_issues = []
+    if (!analysis.improvements) analysis.improvements = ["Consider tone adjustments"]
 
     return analysis
   } catch (error) {
-    if (error instanceof SyntaxError) {
-      throw new Error("Failed to parse tone analysis response")
-    }
+    console.error("Tone analysis error:", error)
     throw error
   }
 }

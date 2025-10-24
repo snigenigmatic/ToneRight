@@ -1,8 +1,8 @@
 export function getToneColor(score: number): string {
-  if (score >= 0.8) return "text-green-600"
-  if (score >= 0.6) return "text-blue-600"
-  if (score >= 0.4) return "text-yellow-600"
-  return "text-red-600"
+  if (score >= 0.8) return "text-green-600 dark:text-green-400"
+  if (score >= 0.6) return "text-blue-600 dark:text-blue-400"
+  if (score >= 0.4) return "text-yellow-600 dark:text-yellow-400"
+  return "text-red-600 dark:text-red-400"
 }
 
 export function getToneBgColor(score: number): string {
@@ -19,13 +19,16 @@ export function formatConfidence(confidence: number): string {
 export function getOverallToneColor(tone: string): string {
   const lowerTone = tone.toLowerCase()
   if (lowerTone.includes("professional") || lowerTone.includes("formal") || lowerTone.includes("respectful")) {
-    return "text-blue-600"
+    return "text-blue-600 dark:text-blue-400"
   }
   if (lowerTone.includes("casual") || lowerTone.includes("friendly") || lowerTone.includes("informal")) {
-    return "text-green-600"
+    return "text-green-600 dark:text-green-400"
   }
   if (lowerTone.includes("negative") || lowerTone.includes("angry") || lowerTone.includes("hostile")) {
-    return "text-red-600"
+    return "text-red-600 dark:text-red-400"
   }
-  return "text-foreground"
+  if (lowerTone.includes("neutral")) {
+    return "text-gray-700 dark:text-gray-300"
+  }
+  return "text-gray-900 dark:text-gray-100"
 }
